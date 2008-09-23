@@ -605,8 +605,8 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(stem('succeeds'), 'succeed')
 
         # hardcore test
-        infile = open('../tools/testData/voc.txt', 'r')
-        outfile = open('../tools/testData/stemmedvoc.txt', 'r')
+        infile = open('./voc.txt', 'r')
+        outfile = open('./stemmedvoc.txt', 'r')
         while True:
             word = infile.readline()
             output = outfile.readline()
