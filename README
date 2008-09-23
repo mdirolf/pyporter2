@@ -1,3 +1,14 @@
 pyporter2: A python implementation of the Porter2 stemmer.
 
 See http://snowball.tartarus.org/algorithms/english/stemmer.html
+
+USAGE
+-----
+>>> import porter2
+>>> porter2.stem('stemming')
+'stem'
+
+UNIT TESTS
+----------
+To run the unit tests do:
+> python porter2.py
