@@ -10,7 +10,7 @@ def get_r1(word):
         return 5
     if word.startswith('commun'):
         return 6
-    
+
     # normal form
     match = regexp.match(word)
     if match:
@@ -82,7 +82,7 @@ def step_1b(word, r1):
         if len(word) - 3 >= r1:
             return word[:-1]
         return word
-    
+
     def ends_with_double(word):
         doubles = ['bb', 'dd', 'ff', 'gg', 'mm', 'nn', 'pp', 'rr', 'tt']
         for double in doubles:
@@ -98,7 +98,7 @@ def step_1b(word, r1):
         if is_short_word(word):
             return word + 'e'
         return word
-    
+
     suffixes = ['ed', 'edly', 'ing', 'ingly']
     for suffix in suffixes:
         if word.endswith(suffix):
@@ -106,7 +106,7 @@ def step_1b(word, r1):
             if re.search(r"[aeiouy]", preceding):
                 return step_1b_helper(preceding)
             return word
-    
+
     return word
 
 def step_1c(word):
@@ -127,7 +127,7 @@ def step_2(word, r1):
                         return word[:-len(end)] + repl
             return word
         return None
-    
+
     triples = [('ization', 'ize', []),
                ('ational', 'ate', []),
                ('fulness', 'ful', []),
@@ -152,12 +152,12 @@ def step_2(word, r1):
                ('bli', 'ble', []),
                ('ogi', 'og', ['l']),
                ('li', '', ['c', 'd', 'e', 'g', 'h', 'k', 'm', 'n', 'r', 't'])]
-    
+
     for trip in triples:
         attempt = step_2_helper(trip[0], trip[1], trip[2])
         if attempt:
             return attempt
-    
+
     return word
 
 def step_3(word, r1, r2):
@@ -197,11 +197,11 @@ def step_4(word, r2):
             if len(word) - len(end) >= r2:
                 return word[:-len(end)]
             return word
-    
+
     if word.endswith('sion') or word.endswith('tion'):
         if len(word) - 3 >= r2:
             return word[:-3]
-    
+
     return word
 
 def step_5(word, r1, r2):
@@ -209,13 +209,13 @@ def step_5(word, r1, r2):
         if len(word) - 1 >= r2 and word[-2] == 'l':
             return word[:-1]
         return word
-    
+
     if word.endswith('e'):
         if len(word) - 1 >= r2:
             return word[:-1]
         if len(word) - 1 >= r1 and not ends_with_short_syllable(word[:-1]):
             return word[:-1]
-    
+
     return word
 
 def normalize_ys(word):
@@ -246,21 +246,21 @@ def stem(word):
     if len(word) <= 2:
         return word
     word = remove_initial_apostrophe(word)
-    
+
     # handle some exceptional forms
     if word in exceptional_forms:
         return exceptional_forms[word]
-    
+
     word = capitalize_consonant_ys(word)
     r1 = get_r1(word)
     r2 = get_r2(word)
     word = step_0(word)
     word = step_1a(word)
-    
+
     # handle some more exceptional forms
     if word in exceptional_early_exit_post_1a:
         return word
-    
+
     word = step_1b(word, r1)
     word = step_1c(word)
     word = step_2(word, r1)
@@ -269,7 +269,7 @@ def stem(word):
     word = step_5(word, r1, r2)
     word = normalize_ys(word)
     return word
-    
+
 class TestPorter2(unittest.TestCase):
     def setUp(self):
         pass
@@ -281,7 +281,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(get_r1('animadversion'), 2)
         self.assertEqual(get_r1('sprinkled'), 5)
         self.assertEqual(get_r1('eucharist'), 3)
-        
+
         # test exceptional forms
         self.assertEqual(get_r1('gener'), 5)
         self.assertEqual(get_r1('generous'), 5)
@@ -305,7 +305,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(get_r2('animadversion'), 4)
         self.assertEqual(get_r2('sprinkled'), 9)
         self.assertEqual(get_r2('eucharist'), 6)
-    
+
     def testEndsWithShortSyllable(self):
         self.assertEqual(ends_with_short_syllable(''), False)
         self.assertEqual(ends_with_short_syllable('rap'), True)
@@ -326,14 +326,14 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(is_short_word('bead'), False)
         self.assertEqual(is_short_word('embed'), False)
         self.assertEqual(is_short_word('beds'), False)
-    
+
     def testRemoveInitialApostrophe(self):
         self.assertEqual(remove_initial_apostrophe(''), '')
         self.assertEqual(remove_initial_apostrophe('mike'), 'mike')
         self.assertEqual(remove_initial_apostrophe('\'mike'), 'mike')
         self.assertEqual(remove_initial_apostrophe('\'mi\'e'), 'mi\'e')
         self.assertEqual(remove_initial_apostrophe('\'til'), 'til')
-    
+
     def testCapitalizeConsonantYs(self):
         self.assertEqual(capitalize_consonant_ys(''), '')
         self.assertEqual(capitalize_consonant_ys('mike'), 'mike')
@@ -344,14 +344,14 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(capitalize_consonant_ys('flying'), 'flying')
         self.assertEqual(capitalize_consonant_ys('syzygy'), 'syzygy')
         self.assertEqual(capitalize_consonant_ys('sayyid'), 'saYyid')
-    
+
     def testStep0(self):
         self.assertEqual(step_0(''), '')
         self.assertEqual(step_0('mike'), 'mike')
         self.assertEqual(step_0('dog\'s'), 'dog')
         self.assertEqual(step_0('dog\'s\''), 'dog')
         self.assertEqual(step_0('dog\''), 'dog')
-    
+
     def testStep1a(self):
         self.assertEqual(step_1a(''), '')
         self.assertEqual(step_1a('caresses'), 'caress')
@@ -369,7 +369,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(step_1a('mikeus'), 'mikeus')
         self.assertEqual(step_1a('mikess'), 'mikess')
         self.assertEqual(step_1a('truss'), 'truss')
-    
+
     def testStep1b(self):
         self.assertEqual(step_1b('', 0), '')
         self.assertEqual(step_1b('ed', 0), 'ed')
@@ -404,7 +404,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(step_1b('hoping', 0), 'hope')
         self.assertEqual(step_1b('hopingly', 0), 'hope')
         self.assertEqual(step_1b('coped', 0), 'cope')
-        
+
     def testStep1c(self):
         self.assertEqual(step_1c(''), '')
         self.assertEqual(step_1c('cry'), 'cri')
@@ -413,7 +413,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(step_1c('crY'), 'cri')
         self.assertEqual(step_1c('bY'), 'bY')
         self.assertEqual(step_1c('saY'), 'saY')
-    
+
     def testStep2(self):
         self.assertEqual(step_2('', 0), '')
         self.assertEqual(step_2('mike', 0), 'mike')
@@ -502,7 +502,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(step_3('decorative', 3, 5), 'decor')
         self.assertEqual(step_3('decorative', 3, 6), 'decorative')
         self.assertEqual(step_3('decorative', 6, 5), 'decorative')
-    
+
     def testStep4(self):
         self.assertEqual(step_4('', 0), '')
         self.assertEqual(step_4('mike', 0), 'mike')
@@ -540,7 +540,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(step_4('hive', 3), 'hive')
         self.assertEqual(step_4('ize', 0), '')
         self.assertEqual(step_4('ize', 1), 'ize')
-    
+
     def testStep5(self):
         self.assertEqual(step_5('mik', 0, 0), 'mik')
         self.assertEqual(step_5('mike', 5, 3), 'mik')
@@ -550,7 +550,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(step_5('recall', 7, 5), 'recal')
         self.assertEqual(step_5('recal', 0, 4), 'recal')
         self.assertEqual(step_5('recall', 0, 6), 'recall')
-    
+
     def testNormalizeYs(self):
         self.assertEqual(normalize_ys(''), '')
         self.assertEqual(normalize_ys('mike'), 'mike')
@@ -558,10 +558,10 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(normalize_ys('sYzygY'), 'syzygy')
         self.assertEqual(normalize_ys('MiKe'), 'MiKe')
         self.assertEqual(normalize_ys('MDirYol'), 'MDiryol')
-    
+
     def testStem(self):
         self.assertEqual(stem(''), '')
-        
+
         # some normal case tests
         self.assertEqual(stem('mike'), 'mike')
         self.assertEqual(stem('consign'), 'consign')
@@ -575,7 +575,7 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(stem('consistently'), 'consist')
         self.assertEqual(stem('consisting'), 'consist')
         self.assertEqual(stem('consists'), 'consist')
-        
+
         # exceptional form tests
         self.assertEqual(stem('skis'), 'ski')
         self.assertEqual(stem('skies'), 'sky')
@@ -615,6 +615,6 @@ class TestPorter2(unittest.TestCase):
             word = word[:-1]
             output = output[:-1]
             self.assertEqual(stem(word), output)
- 
+
 if __name__ == '__main__':
     unittest.main()
