@@ -21,7 +21,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-"""An implementation of the Porter2 stemming algorithm.
+"""pyporter2: An implementation of the Porter2 stemming algorithm.
 
 See http://snowball.tartarus.org/algorithms/english/stemmer.html"""
 import unittest, re
