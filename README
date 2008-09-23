@@ -1,1 +1,3 @@
 A python implementation of the Porter2 stemmer.
+
+See http://snowball.tartarus.org/algorithms/english/stemmer.html
