@@ -266,36 +266,124 @@ exceptional_forms = {'skis': 'ski',
 exceptional_early_exit_post_1a = ['inning', 'outing', 'canning', 'herring', 'earring', 'proceed', 'exceed', 'succeed']
 
 def stem(word):
-    if len(word) <= 2:
+    """The main entry point in the old version of the API."""
+    raise DeprecationWarning('stem() is deprecated starting with v1.0.0')
+
+def algorithms():
+    """Get a list of the names of the available stemming algorithms.
+
+    The only algorithm currently supported is the "english", or porter2,
+    algorithm.
+    """
+    return ['english']
+
+def version ():
+    """Get the version number of the stemming module.
+
+    This is the version number of the Stemmer module as a whole (not for an
+    individual algorithm).
+    """
+    return '1.0.0'
+
+class Stemmer:
+    """An instance of a stemming algorithm.
+
+    When creating a Stemmer object, there is one required argument:
+    the name of the algorithm to use in the new stemmer. A list of the
+    valid algorithm names may be obtained by calling the algorithms()
+    function in this module. In addition, the appropriate stemming algorithm
+    for a given language may be obtained by using the 2 or 3 letter ISO 639
+    language codes.
+    """
+    max_cache_size = 10000
+
+    def __init__ (self, algorithm, cache_size=None):
+        if algorithm not in ['english', 'eng', 'en']:
+            raise KeyError("Stemming algorithm '%s' not found" % algorithm)
+        if cache_size:
+            self.max_cache_size = cache_size
+
+    def stemWord(self, word):
+        """Stem a word.
+
+        This takes a single argument, word, which should either be a UTF-8
+        encoded string, or a unicode object.
+
+        The result is the stemmed form of the word. If the word supplied
+        was a unicode object, the result will be a unicode object: if the
+        word supplied was a string, the result will be a UTF-8 encoded string.
+        """
+        return Stemmer._stem(word)
+
+    def stemWords(self, words):
+        """Stem a list of words.
+
+        This takes a single argument, words, which must be a sequence,
+        iterator, generator or similar.
+
+        The entries in words should either be UTF-8 encoded strings,
+        or a unicode objects.
+
+        The result is a list of the stemmed forms of the words. If the word
+        supplied was a unicode object, the stemmed form will be a unicode
+        object: if the word supplied was a string, the stemmed form will
+        be a UTF-8 encoded string.
+        """
+        return [self.stemWord(word) for word in words]
+
+    @classmethod
+    def _stem(cls, word):
+        was_unicode = False
+
+        if isinstance(word, unicode):
+            was_unicode = True
+            word = word.encode('utf-8')
+
+        if len(word) <= 2:
+            return word
+        word = remove_initial_apostrophe(word)
+
+        # handle some exceptional forms
+        if word in exceptional_forms:
+            return exceptional_forms[word]
+
+        word = capitalize_consonant_ys(word)
+        r1 = get_r1(word)
+        r2 = get_r2(word)
+        word = step_0(word)
+        word = step_1a(word)
+
+        # handle some more exceptional forms
+        if word in exceptional_early_exit_post_1a:
+            return word
+
+        word = step_1b(word, r1)
+        word = step_1c(word)
+        word = step_2(word, r1)
+        word = step_3(word, r1, r2)
+        word = step_4(word, r2)
+        word = step_5(word, r1, r2)
+        word = normalize_ys(word)
+
+        if was_unicode:
+            return word.decode('utf-8')
         return word
-    word = remove_initial_apostrophe(word)
-
-    # handle some exceptional forms
-    if word in exceptional_forms:
-        return exceptional_forms[word]
-
-    word = capitalize_consonant_ys(word)
-    r1 = get_r1(word)
-    r2 = get_r2(word)
-    word = step_0(word)
-    word = step_1a(word)
-
-    # handle some more exceptional forms
-    if word in exceptional_early_exit_post_1a:
-        return word
-
-    word = step_1b(word, r1)
-    word = step_1c(word)
-    word = step_2(word, r1)
-    word = step_3(word, r1, r2)
-    word = step_4(word, r2)
-    word = step_5(word, r1, r2)
-    word = normalize_ys(word)
-    return word
 
 class TestPorter2(unittest.TestCase):
     def setUp(self):
         pass
+
+    def testModule(self):
+        self.assertEqual(algorithms(), ['english'])
+        self.assertEqual(version(), '1.0.0')
+        self.assertRaises(KeyError, Stemmer, 'porter')
+        self.assertRaises(KeyError, Stemmer, 'random')
+        stemmer = Stemmer('english')
+        stemmer = Stemmer('en')
+        stemmer = Stemmer('eng')
+
+    def testDeprecation(self):
+        self.assertRaises(DeprecationWarning, stem, 'stemming')
 
     def testGetR1(self):
         self.assertEqual(get_r1('beautiful'), 5)
@@ -583,49 +671,50 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(normalize_ys('MDirYol'), 'MDiryol')
 
     def testStem(self):
-        self.assertEqual(stem(''), '')
+        stemmer = Stemmer('english')
+        self.assertEqual(stemmer.stemWord(''), '')
 
         # some normal case tests
-        self.assertEqual(stem('mike'), 'mike')
-        self.assertEqual(stem('consign'), 'consign')
-        self.assertEqual(stem('consigned'), 'consign')
-        self.assertEqual(stem('consigning'), 'consign')
-        self.assertEqual(stem('consignment'), 'consign')
-        self.assertEqual(stem('consist'), 'consist')
-        self.assertEqual(stem('consisted'), 'consist')
-        self.assertEqual(stem('consistency'), 'consist')
-        self.assertEqual(stem('consistent'), 'consist')
-        self.assertEqual(stem('consistently'), 'consist')
-        self.assertEqual(stem('consisting'), 'consist')
-        self.assertEqual(stem('consists'), 'consist')
+        self.assertEqual(stemmer.stemWord('mike'), 'mike')
+        self.assertEqual(stemmer.stemWord('consign'), 'consign')
+        self.assertEqual(stemmer.stemWord('consigned'), 'consign')
+        self.assertEqual(stemmer.stemWord('consigning'), 'consign')
+        self.assertEqual(stemmer.stemWord('consignment'), 'consign')
+        self.assertEqual(stemmer.stemWord('consist'), 'consist')
+        self.assertEqual(stemmer.stemWord('consisted'), 'consist')
+        self.assertEqual(stemmer.stemWord('consistency'), 'consist')
+        self.assertEqual(stemmer.stemWord('consistent'), 'consist')
+        self.assertEqual(stemmer.stemWord('consistently'), 'consist')
+        self.assertEqual(stemmer.stemWord('consisting'), 'consist')
+        self.assertEqual(stemmer.stemWord('consists'), 'consist')
 
-        # exceptional form tests
-        self.assertEqual(stem('skis'), 'ski')
-        self.assertEqual(stem('skies'), 'sky')
-        self.assertEqual(stem('dying'), 'die')
-        self.assertEqual(stem('lying'), 'lie')
-        self.assertEqual(stem('tying'), 'tie')
-        self.assertEqual(stem('idly'), 'idl')
-        self.assertEqual(stem('gently'), 'gentl')
-        self.assertEqual(stem('ugly'), 'ugli')
-        self.assertEqual(stem('early'), 'earli')
-        self.assertEqual(stem('only'), 'onli')
-        self.assertEqual(stem('singly'), 'singl')
-        self.assertEqual(stem('sky'), 'sky')
-        self.assertEqual(stem('news'), 'news')
-        self.assertEqual(stem('howe'), 'howe')
-        self.assertEqual(stem('atlas'), 'atlas')
-        self.assertEqual(stem('cosmos'), 'cosmos')
-        self.assertEqual(stem('bias'), 'bias')
-        self.assertEqual(stem('andes'), 'andes')
-        self.assertEqual(stem('innings'), 'inning')
-        self.assertEqual(stem('outing'), 'outing')
-        self.assertEqual(stem('canninger'), 'canning')
-        self.assertEqual(stem('herrings'), 'herring')
-        self.assertEqual(stem('earring'), 'earring')
-        self.assertEqual(stem('proceeder'), 'proceed')
-        self.assertEqual(stem('exceeding'), 'exceed')
-        self.assertEqual(stem('succeeds'), 'succeed')
+        # exceptionalWord form tests
+        self.assertEqual(stemmer.stemWord('skis'), 'ski')
+        self.assertEqual(stemmer.stemWord('skies'), 'sky')
+        self.assertEqual(stemmer.stemWord('dying'), 'die')
+        self.assertEqual(stemmer.stemWord('lying'), 'lie')
+        self.assertEqual(stemmer.stemWord('tying'), 'tie')
+        self.assertEqual(stemmer.stemWord('idly'), 'idl')
+        self.assertEqual(stemmer.stemWord('gently'), 'gentl')
+        self.assertEqual(stemmer.stemWord('ugly'), 'ugli')
+        self.assertEqual(stemmer.stemWord('early'), 'earli')
+        self.assertEqual(stemmer.stemWord('only'), 'onli')
+        self.assertEqual(stemmer.stemWord('singly'), 'singl')
+        self.assertEqual(stemmer.stemWord('sky'), 'sky')
+        self.assertEqual(stemmer.stemWord('news'), 'news')
+        self.assertEqual(stemmer.stemWord('howe'), 'howe')
+        self.assertEqual(stemmer.stemWord('atlas'), 'atlas')
+        self.assertEqual(stemmer.stemWord('cosmos'), 'cosmos')
+        self.assertEqual(stemmer.stemWord('bias'), 'bias')
+        self.assertEqual(stemmer.stemWord('andes'), 'andes')
+        self.assertEqual(stemmer.stemWord('innings'), 'inning')
+        self.assertEqual(stemmer.stemWord('outing'), 'outing')
+        self.assertEqual(stemmer.stemWord('canninger'), 'canning')
+        self.assertEqual(stemmer.stemWord('herrings'), 'herring')
+        self.assertEqual(stemmer.stemWord('earring'), 'earring')
+        self.assertEqual(stemmer.stemWord('proceeder'), 'proceed')
+        self.assertEqual(stemmer.stemWord('exceeding'), 'exceed')
+        self.assertEqual(stemmer.stemWord('succeeds'), 'succeed')
 
         # hardcore test
         infile = open('./voc.txt', 'r')
@@ -637,7 +726,7 @@ class TestPorter2(unittest.TestCase):
                 break
             word = word[:-1]
             output = output[:-1]
-            self.assertEqual(stem(word), output)
+            self.assertEqual(stemmer.stemWord(word), output)
 
 if __name__ == '__main__':
     unittest.main()

@@ -4,11 +4,12 @@ See http://snowball.tartarus.org/algorithms/english/stemmer.html
 
 USAGE
 -----
->>> import porter2
->>> porter2.stem('stemming')
+>>> import Stemmer
+>>> stemmer = Stemmer.Stemmer('english')
+>>> stemmer.stemWord('stemming')
 'stem'
 
 UNIT TESTS
 ----------
 To run the unit tests do:
-> python porter2.py
+> python Stemmer.py
