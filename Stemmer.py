@@ -337,7 +337,10 @@ class Stemmer:
 
         if isinstance(word, unicode):
             was_unicode = True
-            word = word.encode('utf-8')
+            try:
+                word = word.encode('ascii')
+            except:
+                return word
 
         if len(word) <= 2:
             return word
@@ -715,6 +718,10 @@ class TestPorter2(unittest.TestCase):
         self.assertEqual(stemmer.stemWord('proceeder'), 'proceed')
         self.assertEqual(stemmer.stemWord('exceeding'), 'exceed')
         self.assertEqual(stemmer.stemWord('succeeds'), 'succeed')
+
+        # Non-ascii
+        self.assertEqual(stemmer.stemWord(u'czy\u017ce'), u'czy\u017ce')
+        self.assertEqual(stemmer.stemWord(u'eug\xe8neysa\xffe'), u'eug\xe8neysa\xffe')
 
         # hardcore test
         infile = open('./voc.txt', 'r')
