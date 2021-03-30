@@ -335,7 +335,7 @@ class Stemmer:
     def _stem(cls, word):
         was_unicode = False
 
-        if isinstance(word, unicode):
+        if isinstance(word, bytes):
             was_unicode = True
             try:
                 word = word.encode('ascii')
